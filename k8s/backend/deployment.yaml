@@ -1,0 +1,69 @@
+# ConfigMap for non-sensitive configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pfe-backend-config
+  namespace: pfe
+data:
+  PORT: "5000"
+  BACKEND_URL: "https://backendexpresslac-hv8i.onrender.com"
+
+---
+# Secret for sensitive configuration
+apiVersion: v1
+kind: Secret
+metadata:
+  name: pfe-backend-secret
+  namespace: pfe
+type: Opaque
+data:
+  # Base64 encoded values
+  MONGO_URI: bW9uZ29kYjovL2thbm5vdTprYW5ub3VAcGZlLm10aGhhcHkubW9uZ29kYi5uZXQv
+  JWT_SECRET: MzY2YTJkMmZhZjIxZDc5MmNzYTE5MWRlYTkzOGVjZTlmMTdiZjk4MDJkYzkzNjQ3YTBlOTFlZTVlZWMxMjExMzdjYmNlM2IxMTk0ZjFmZjczNTAxOWI4ZmNiMWUzZjk4NTI5ZjQ3NmQ5NGZiYWZhZjM2ZjU5NTYzMDU1ODQ0
+  EMAIL_USER: ZWR1bmV4c3lzdEBnbWFpbC5jb20=
+  EMAIL_PASS: dmVremcgc2dkZyBybnhkIGVoeHc=
+
+---
+# Deployment for backend
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pfe-backend
+  namespace: pfe
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: pfe-backend
+  template:
+    metadata:
+      labels:
+        app: pfe-backend
+    spec:
+      imagePullSecrets:
+        - name: ghcr-secret
+      containers:
+        - name: backend
+          image: ghcr.io/kandidou391-dotcom/pfe-backend:latest
+          ports:
+            - containerPort: 5000
+          envFrom:
+            - configMapRef:
+                name: pfe-backend-config
+            - secretRef:
+                name: pfe-backend-secret
+
+---
+# Service for backend
+apiVersion: v1
+kind: Service
+metadata:
+  name: pfe-backend
+  namespace: pfe
+spec:
+  selector:
+    app: pfe-backend
+  ports:
+    - port: 5000
+      targetPort: 5000
+  type: ClusterIP

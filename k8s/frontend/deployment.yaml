@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pfe-frontend
+  namespace: pfe
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: pfe-frontend
+  template:
+    metadata:
+      labels:
+        app: pfe-frontend
+    spec:
+      imagePullSecrets:
+        - name: ghcr-secret
+      containers:
+        - name: frontend
+          image: ghcr.io/kandidou391-dotcom/pfe-frontend:latest
+          ports:
+            - containerPort: 80
+          envFrom:
+            - configMapRef:
+                name: pfe-frontend-config
